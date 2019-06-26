@@ -8,16 +8,20 @@ import (
 	"path"
 	"sort"
 	"strings"
+    "go/parser"
+    "go/token"
 )
 
 var (
 	p        string
 	rec_chan chan assertionSlice
+	default_p string
 )
 
 func init() {
 	flag.StringVar(&p, "p", "", "set a golang package to recommend assertions")
 	rec_chan = make(chan assertionSlice)
+	default_p = "../cwe-testsuite-golang/incorrect-comparison-697/regular-expression-without-anchors-777/example"
 }
 
 func main() {
@@ -28,7 +32,8 @@ func main() {
 	flag.Parse()
 	if p == "" {
 		log.Println("==> Package path should not be empty. Use -p to set.")
-		return
+		// return
+		p = default_p
 	}
 	log.Printf("==> Package path is set: %v\n", p)
 
@@ -68,22 +73,32 @@ func rec(file_path string) {
 	var raw_code string
 
 	log.Println(file_path)
-	raw_code = ""
-
+	b, err := ioutil.ReadFile(file_path)
+	if err != nil {
+		panic(err)
+	}
+	raw_code = string(b)
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "", raw_code, 0)
+	if err != nil {
+        panic(err)
+    }
+    // ast.Print(fset, f)
+    
 	// checkers in concurrent mode
-	result = append(result, C777(raw_code, file_path)...)
-	result = append(result, C478(raw_code, file_path)...)
-	result = append(result, C839(raw_code, file_path)...)
-	result = append(result, C486(raw_code, file_path)...)
-	result = append(result, C1077(raw_code, file_path)...)
-	result = append(result, C785(raw_code, file_path)...)
-	result = append(result, C466(raw_code, file_path)...)
-	result = append(result, C822(raw_code, file_path)...)
-	result = append(result, C823(raw_code, file_path)...)
-	result = append(result, C824(raw_code, file_path)...)
-	result = append(result, C128(raw_code, file_path)...)
-	result = append(result, C190(raw_code, file_path)...)
-	result = append(result, C191(raw_code, file_path)...)
+	result = append(result, C777(fset, f, file_path)...)
+	result = append(result, C478(fset, f, file_path)...)
+	result = append(result, C839(fset, f, file_path)...)
+	result = append(result, C486(fset, f, file_path)...)
+	result = append(result, C1077(fset, f, file_path)...)
+	result = append(result, C785(fset, f, file_path)...)
+	result = append(result, C466(fset, f, file_path)...)
+	result = append(result, C822(fset, f, file_path)...)
+	result = append(result, C823(fset, f, file_path)...)
+	result = append(result, C824(fset, f, file_path)...)
+	result = append(result, C128(fset, f, file_path)...)
+	result = append(result, C190(fset, f, file_path)...)
+	result = append(result, C191(fset, f, file_path)...)
 
 	rec_chan <- result
 }
