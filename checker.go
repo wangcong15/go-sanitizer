@@ -3,11 +3,29 @@ package main
 import (
 	"go/ast"
     "go/token"
+    "log"
 )
 
 // CWE-777: Regular Expression without Anchors
 func C777(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
 	// demo: result = append(result, assertion{file_path, 2, "123", 777})
+	ast.Inspect(f, func(n ast.Node) bool {
+		// work on each function
+		ret, ok := n.(*ast.FuncDecl)
+		if ok {
+			log.Printf("==> Analyzing function in Line.%v\n", fset.Position(ret.Pos()).Line)
+			ast.Inspect(ret, func(n ast.Node) bool {
+				ret2, ok2 := n.(*ast.CallExpr)
+				if ok2 {
+					// TODO
+					if ret3, ok3 := 
+					log.Println(ret2.Fun)
+				}
+				return true
+			})
+		}
+		return true
+	})
 	return
 }
 

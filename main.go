@@ -10,6 +10,7 @@ import (
 	"strings"
     "go/parser"
     "go/token"
+    // "go/ast"
 )
 
 var (
@@ -21,7 +22,7 @@ var (
 func init() {
 	flag.StringVar(&p, "p", "", "set a golang package to recommend assertions")
 	rec_chan = make(chan assertionSlice)
-	default_p = "../cwe-testsuite-golang/incorrect-comparison-697/regular-expression-without-anchors-777/example"
+	default_p = "../cwe-testsuite-golang-bak/incorrect-comparison-697/regular-expression-without-anchors-777/example"
 }
 
 func main() {
