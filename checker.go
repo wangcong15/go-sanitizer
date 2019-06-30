@@ -136,6 +136,34 @@ func C1077(fset *token.FileSet, f *ast.File, file_path string) (result assertion
 
 // CWE-785: Use of Path Manipulation Function without Maximum-sized Buffer
 func C785(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
+	var exp1 string
+	var exp2 string
+	var expr string
+	var location int
+	var weak_id int = 785
+	ast.Inspect(f, func(n1 ast.Node) bool {
+		// C1: scope=ast.FuncDecl
+		if ret, ok := n1.(*ast.FuncDecl); ok {
+			ast.Inspect(ret, func(n2 ast.Node) bool {
+				// C2
+				if ret2, ok := n2.(*ast.CallExpr); ok {
+					if getExpr(ret2.Fun) == "copy" {
+						args := ret2.Args
+						exp1 = getExpr(args[0])
+						exp2 = getExpr(args[1])
+						if exp1 != "" && exp2 != "" {
+							expr = "goassert.AssertGte(len(" + exp1 + "), len(" + exp2 + "))"
+							location = fset.Position(ret2.Lparen).Line
+							// NEW ASSERTION
+							result = append(result, assertion{file_path, location, expr, weak_id})
+						}
+					}
+				}
+				return true
+			})
+		}
+		return true
+	})
 	return
 }
 
