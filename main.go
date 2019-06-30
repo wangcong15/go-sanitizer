@@ -2,20 +2,20 @@ package main
 
 import (
 	"flag"
+	"go/parser"
+	"go/token"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
 	"sort"
 	"strings"
-    "go/parser"
-    "go/token"
-    // "go/ast"
+	// "go/ast"
 )
 
 var (
-	p        string
-	rec_chan chan assertionSlice
+	p         string
+	rec_chan  chan assertionSlice
 	default_p string
 )
 
@@ -82,10 +82,10 @@ func rec(file_path string) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "", raw_code, 0)
 	if err != nil {
-        panic(err)
-    }
-    // ast.Print(fset, f)
-    
+		panic(err)
+	}
+	// ast.Print(fset, f)
+
 	// checkers in concurrent mode
 	result = append(result, C777(fset, f, file_path)...)
 	result = append(result, C478(fset, f, file_path)...)
