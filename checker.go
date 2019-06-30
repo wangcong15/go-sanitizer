@@ -56,11 +56,51 @@ func C777(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 
 // CWE-478: Missing Default Case in Switch Statement
 func C478(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
-	return
-}
-
-// CWE-839: Numeric Range Comparison Without Minimum Check
-func C839(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
+	var variable string
+	var cases []string
+	var flag bool
+	var expr string
+	var location int
+	var weak_id int = 478
+	ast.Inspect(f, func(n1 ast.Node) bool {
+		// C1: scope=ast.FuncDecl
+		if ret, ok := n1.(*ast.FuncDecl); ok {
+			ast.Inspect(ret, func(n2 ast.Node) bool {
+				if ret2, ok := n2.(*ast.SwitchStmt); ok {
+					variable = getExpr(ret2.Tag)
+					cases = []string{}
+					flag = true
+					for _, c := range ret2.Body.List {
+						if ret3, ok := c.(*ast.CaseClause); ok {
+							for _, e := range ret3.List {
+								new_case_exp := getExpr(e)
+								if new_case_exp == "default" {
+									flag = false
+									break
+								} else {
+									cases = append(cases, new_case_exp)
+								}
+							}
+						}
+					}
+					if flag {
+						cases_to_str := cases[0]
+						for idx, val := range cases {
+							if idx > 0 {
+								cases_to_str += ", " + val
+							}
+						}
+						expr = "goassert.AssertIntIn(" + variable + ", []int{" + cases_to_str + "})"
+						location = fset.Position(ret2.Switch).Line
+						// NEW ASSERTION
+						result = append(result, assertion{file_path, location, expr, weak_id})
+					}
+				}
+				return true
+			})
+		}
+		return true
+	})
 	return
 }
 
@@ -116,44 +156,40 @@ func C823(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 
 // CWE-824: Access of Uninitialized Pointer
 func C824(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
-	var variable string
-	var cases []string
-	var flag bool
+	var uninit_vars map[string]int = make(map[string]int)
 	var expr string
 	var location int
 	var weak_id int = 824
+
 	ast.Inspect(f, func(n1 ast.Node) bool {
-		// C1: scope=ast.FuncDecl
+		// C1: scope = ast.FuncDecl
 		if ret, ok := n1.(*ast.FuncDecl); ok {
 			ast.Inspect(ret, func(n2 ast.Node) bool {
-				if ret2, ok := n2.(*ast.SwitchStmt); ok {
-					variable = getExpr(ret2.Tag)
-					cases = []string{}
-					flag = true
-					for _, c := range ret2.Body.List {
-						if ret3, ok := c.(*ast.CaseClause); ok {
-							for _, e := range ret3.List {
-								new_case_exp := getExpr(e)
-								if new_case_exp == "default" {
-									flag = false
-									break
-								} else {
-									cases = append(cases, new_case_exp)
-								}
-							}
+				// C2
+				if ret2, ok := n2.(*ast.ValueSpec); ok && len(ret2.Values) == 0 {
+					for _, name := range ret2.Names {
+						uninit_vars[getExpr(name)] = 1
+					}
+				}
+				// C3
+				if ret3, ok := n2.(*ast.AssignStmt); ok {
+					for _, name := range ret3.Lhs {
+						temp_name := getExpr(name)
+						if uninit_vars[temp_name] == 1 {
+							uninit_vars[temp_name] = 2
 						}
 					}
-					if flag {
-						cases_to_str := cases[0]
-						for idx, val := range cases {
-							if idx > 0 {
-								cases_to_str += ", " + val
-							}
+				}
+				// C4
+				if ret3, ok := n2.(*ast.CallExpr); ok {
+					for _, name := range ret3.Args {
+						temp_name := getExpr(name)
+						if uninit_vars[temp_name] == 1 {
+							expr = "goassert.AssertNValEq(" + temp_name + ", nil)"
+							location = fset.Position(ret3.Lparen).Line
+							// NEW ASSERTION
+							result = append(result, assertion{file_path, location, expr, weak_id})
 						}
-						expr = "goassert.AssertIntIn(" + variable + ", []int{" + cases_to_str + "})"
-						location = fset.Position(ret2.Switch).Line
-						// NEW ASSERTION
-						result = append(result, assertion{file_path, location, expr, weak_id})
 					}
 				}
 				return true
@@ -185,7 +221,7 @@ func C128(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 						}
 					}
 					ret5 := ret2.Rhs
-
+					// C3
 					for idx, args := range ret5 {
 						if ret6, ok := args.(*ast.CallExpr); ok {
 							if ret7, ok := ret6.Fun.(*ast.Ident); ok {

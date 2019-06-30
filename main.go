@@ -24,7 +24,7 @@ func init() {
 	flag.StringVar(&flag_p, "p", "", "set a golang package to recommend assertions")
 	flag.BoolVar(&flag_debug, "d", false, "show abstract syntax tree")
 	rec_chan = make(chan assertionSlice)
-	default_p = "../cwe-testsuite-golang-bak/incorrect-comparison-697/missing-default-case-in-switch-statement-478/example"
+	default_p = "../cwe-testsuite-golang-bak/incorrect-access-of-indexable-resource-118/access-of-uninitialized-pointer-824/pointer"
 }
 
 func main() {
@@ -93,7 +93,6 @@ func rec(file_path string) {
 	// checkers in concurrent mode
 	result = append(result, C777(fset, f, file_path)...)
 	result = append(result, C478(fset, f, file_path)...)
-	result = append(result, C839(fset, f, file_path)...)
 	result = append(result, C1077(fset, f, file_path)...)
 	result = append(result, C785(fset, f, file_path)...)
 	result = append(result, C466(fset, f, file_path)...)
