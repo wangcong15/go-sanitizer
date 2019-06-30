@@ -169,6 +169,34 @@ func C785(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 
 // CWE-466: Return of Pointer Value Outside of Expected Range
 func C466(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
+	var var_list []string
+	var expr string
+	var location int
+	var weak_id int = 466
+	ast.Inspect(f, func(n1 ast.Node) bool {
+		// C1: scope=ast.FuncDecl
+		if ret, ok := n1.(*ast.FuncDecl); ok {
+			ast.Inspect(ret, func(n2 ast.Node) bool {
+				// C2
+				if ret2, ok := n2.(*ast.AssignStmt); ok {
+					var_list = []string{}
+					for _, v := range ret2.Lhs {
+						var_list = append(var_list, getExpr(v))
+					}
+					for i, v := range ret2.Rhs {
+						if _, ok := v.(*ast.CallExpr); ok {
+							expr = "goassert.AssertNNil(" + var_list[i] + ")"
+							location = fset.Position(ret2.TokPos).Line
+							// NEW ASSERTION
+							result = append(result, assertion{file_path, location, expr, weak_id})
+						}
+					}
+				}
+				return true
+			})
+		}
+		return true
+	})
 	return
 }
 

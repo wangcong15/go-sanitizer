@@ -24,7 +24,7 @@ func init() {
 	flag.StringVar(&flag_p, "p", "", "set a golang package to recommend assertions")
 	flag.BoolVar(&flag_debug, "d", false, "show abstract syntax tree")
 	rec_chan = make(chan assertionSlice)
-	default_p = "../cwe-testsuite-golang-bak/incorrect-access-of-indexable-resource-118/use-of-path-manipulation-function-without-maximum-sized-buffer-785/filename"
+	default_p = "../cwe-testsuite-golang-bak/incorrect-access-of-indexable-resource-118/return-of-pointer-value-outside-of-expected-range-466/return_not_nil"
 }
 
 func main() {
