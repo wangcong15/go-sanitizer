@@ -1,19 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
-	"reflect"
 )
-
-func Reflect(node ast.Node) {
-	value := reflect.ValueOf(node)
-	typ := value.Type()
-	for i := 0; i < value.NumMethod(); i++ {
-		fmt.Println(fmt.Sprintf("method[%d]%s and type is %v", i, typ.Method(i).Name, typ.Method(i).Type))
-	}
-}
 
 // CWE-777: Regular Expression without Anchors
 func C777(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
@@ -24,6 +14,7 @@ func C777(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 	ast.Inspect(f, func(n1 ast.Node) bool {
 		// C1: scope=ast.FuncDecl
 		if ret, ok := n1.(*ast.FuncDecl); ok {
+			val1 = make(map[string]int)
 			ast.Inspect(ret, func(n2 ast.Node) bool {
 				// C2
 				if ret2, ok := n2.(*ast.CallExpr); ok {
@@ -110,6 +101,45 @@ func C824(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 
 // CWE-128: Wrap-around Error
 func C128(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
+	var val_list []string
+	var expr string
+	var location int
+	var weak_id int = 128
+	ast.Inspect(f, func(n1 ast.Node) bool {
+		// C1: scope=ast.FuncDecl
+		if ret, ok := n1.(*ast.FuncDecl); ok {
+			ast.Inspect(ret, func(n2 ast.Node) bool {
+				// C2
+				if ret2, ok := n2.(*ast.AssignStmt); ok {
+					val_list = []string{}
+					location = fset.Position(ret2.TokPos).Line + 1
+					ret3 := ret2.Lhs
+					for _, args := range ret3 {
+						if ret4, ok := args.(*ast.Ident); ok {
+							val_list = append(val_list, ret4.Name)
+						}
+					}
+					ret5 := ret2.Rhs
+
+					for idx, args := range ret5 {
+						if ret6, ok := args.(*ast.CallExpr); ok {
+							if ret7, ok := ret6.Fun.(*ast.Ident); ok {
+								if ret7.Name == "int8" || ret7.Name == "int16" || ret7.Name == "int32" {
+									if ret8, ok := ret6.Args[0].(*ast.Ident); ok {
+										expr = "goassert.AssertValEq(" + val_list[idx] + ", " + ret8.Name + ")"
+										// NEW ASSERTION
+										result = append(result, assertion{file_path, location, expr, weak_id})
+									}
+								}
+							}
+						}
+					}
+				}
+				return true
+			})
+		}
+		return true
+	})
 	return
 }
 

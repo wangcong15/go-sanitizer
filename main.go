@@ -22,7 +22,7 @@ var (
 func init() {
 	flag.StringVar(&p, "p", "", "set a golang package to recommend assertions")
 	rec_chan = make(chan assertionSlice)
-	default_p = "../cwe-testsuite-golang-bak/incorrect-comparison-697/regular-expression-without-anchors-777/example"
+	default_p = "../cwe-testsuite-golang-bak/incorrect-calculation-682/wrap-arround-error-128/int-int32"
 }
 
 func main() {
