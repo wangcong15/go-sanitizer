@@ -24,7 +24,7 @@ func init() {
 	flag.StringVar(&flag_p, "p", "", "set a golang package to recommend assertions")
 	flag.BoolVar(&flag_debug, "d", false, "show abstract syntax tree")
 	rec_chan = make(chan assertionSlice)
-	default_p = "../cwe-testsuite-golang-bak/incorrect-comparison-697/floating-point-comparison-with-incorrect-operator-1077/example"
+	default_p = "../cwe-testsuite-golang-bak/incorrect-comparison-697/missing-default-case-in-switch-statement-478/example"
 }
 
 func main() {
@@ -126,7 +126,6 @@ func insert(asserts assertionSlice) {
 				if j >= len(code_arr[val.line_no]) {
 					break
 				}
-				log.Println(string(code_arr[val.line_no][j]))
 				if code_arr[val.line_no][j] == '\t' {
 					code_arr[val.line_no-2] += "\t"
 				} else {

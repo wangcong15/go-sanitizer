@@ -116,6 +116,51 @@ func C823(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 
 // CWE-824: Access of Uninitialized Pointer
 func C824(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
+	var variable string
+	var cases []string
+	var flag bool
+	var expr string
+	var location int
+	var weak_id int = 824
+	ast.Inspect(f, func(n1 ast.Node) bool {
+		// C1: scope=ast.FuncDecl
+		if ret, ok := n1.(*ast.FuncDecl); ok {
+			ast.Inspect(ret, func(n2 ast.Node) bool {
+				if ret2, ok := n2.(*ast.SwitchStmt); ok {
+					variable = getExpr(ret2.Tag)
+					cases = []string{}
+					flag = true
+					for _, c := range ret2.Body.List {
+						if ret3, ok := c.(*ast.CaseClause); ok {
+							for _, e := range ret3.List {
+								new_case_exp := getExpr(e)
+								if new_case_exp == "default" {
+									flag = false
+									break
+								} else {
+									cases = append(cases, new_case_exp)
+								}
+							}
+						}
+					}
+					if flag {
+						cases_to_str := cases[0]
+						for idx, val := range cases {
+							if idx > 0 {
+								cases_to_str += ", " + val
+							}
+						}
+						expr = "goassert.AssertIntIn(" + variable + ", []int{" + cases_to_str + "})"
+						location = fset.Position(ret2.Switch).Line
+						// NEW ASSERTION
+						result = append(result, assertion{file_path, location, expr, weak_id})
+					}
+				}
+				return true
+			})
+		}
+		return true
+	})
 	return
 }
 
