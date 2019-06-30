@@ -24,7 +24,7 @@ func init() {
 	flag.StringVar(&flag_p, "p", "", "set a golang package to recommend assertions")
 	flag.BoolVar(&flag_debug, "d", false, "show abstract syntax tree")
 	rec_chan = make(chan assertionSlice)
-	default_p = "../cwe-testsuite-golang-bak/incorrect-access-of-indexable-resource-118/return-of-pointer-value-outside-of-expected-range-466/return_not_nil"
+	default_p = "../cwe-testsuite-golang-bak/incorrect-access-of-indexable-resource-118/untrusted-pointer-dereference-822/uintptr"
 }
 
 func main() {
@@ -96,8 +96,6 @@ func rec(file_path string) {
 	result = append(result, C1077(fset, f, file_path)...)
 	result = append(result, C785(fset, f, file_path)...)
 	result = append(result, C466(fset, f, file_path)...)
-	result = append(result, C822(fset, f, file_path)...)
-	result = append(result, C823(fset, f, file_path)...)
 	result = append(result, C824(fset, f, file_path)...)
 	result = append(result, C128(fset, f, file_path)...)
 	result = append(result, C190(fset, f, file_path)...)

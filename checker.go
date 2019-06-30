@@ -186,7 +186,7 @@ func C466(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 					for i, v := range ret2.Rhs {
 						if _, ok := v.(*ast.CallExpr); ok {
 							expr = "goassert.AssertNNil(" + var_list[i] + ")"
-							location = fset.Position(ret2.TokPos).Line
+							location = fset.Position(ret2.TokPos).Line + 1
 							// NEW ASSERTION
 							result = append(result, assertion{file_path, location, expr, weak_id})
 						}
@@ -197,16 +197,6 @@ func C466(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 		}
 		return true
 	})
-	return
-}
-
-// CWE-822: Untrusted Pointer Dereference
-func C822(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
-	return
-}
-
-// CWE-823: Use of Out-of-range Pointer Offset
-func C823(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
 	return
 }
 
