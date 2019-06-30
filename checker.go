@@ -145,10 +145,131 @@ func C128(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 
 // CWE-190: Integer Overflow or Wraparound
 func C190(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
+	var dirty_vals map[string]int = make(map[string]int)
+	var exp1 string
+	var exp2 string
+	var expr string
+	var location int
+	var weak_id int = 190
+	ast.Inspect(f, func(n1 ast.Node) bool {
+		// C1: scope=ast.FuncDecl
+		if ret, ok := n1.(*ast.FuncDecl); ok {
+			ast.Inspect(ret, func(n2 ast.Node) bool {
+				// C2
+				if ret2, ok := n2.(*ast.ValueSpec); ok {
+					if ret3, ok := ret2.Type.(*ast.Ident); ok {
+						if isInteger(ret3.Name) && hasCallExpr(ret2) {
+							for _, arg := range ret2.Names {
+								dirty_vals[arg.Name] = 1
+							}
+						}
+					}
+				}
+				// C3
+				if ret4, ok := n2.(*ast.BinaryExpr); ok {
+					if checkBinaryExprOp(n2, "+") {
+						exp1 = ""
+						exp2 = ""
+						if ret5, ok := ret4.X.(*ast.Ident); ok {
+							exp1 = ret5.Name
+						} else if ret6, ok := ret4.X.(*ast.BasicLit); ok {
+							exp1 = ret6.Value
+						}
+						if ret7, ok := ret4.Y.(*ast.Ident); ok {
+							exp2 = ret7.Name
+						} else if ret8, ok := ret4.Y.(*ast.BasicLit); ok {
+							exp2 = ret8.Value
+						}
+						if dirty_vals[exp1] == 1 || dirty_vals[exp2] == 1 {
+							location = fset.Position(ret4.OpPos).Line
+							expr = "goassert.AssertOverflow(" + exp1 + ", " + exp2 + ", " + exp1 + "+" + exp2 + ")"
+							// NEW ASSERTION
+							result = append(result, assertion{file_path, location, expr, weak_id})
+						}
+					}
+				}
+				return true
+			})
+		}
+		return true
+	})
 	return
 }
 
 // CWE-191: Integer Underflow (Wrap or Wraparound)
 func C191(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
+	var dirty_vals map[string]int = make(map[string]int)
+	var exp1 string
+	var exp2 string
+	var expr string
+	var location int
+	var weak_id int = 190
+	ast.Inspect(f, func(n1 ast.Node) bool {
+		// C1: scope=ast.FuncDecl
+		if ret, ok := n1.(*ast.FuncDecl); ok {
+			ast.Inspect(ret, func(n2 ast.Node) bool {
+				// C2
+				if ret2, ok := n2.(*ast.ValueSpec); ok {
+					if ret3, ok := ret2.Type.(*ast.Ident); ok {
+						if isInteger(ret3.Name) && hasCallExpr(ret2) {
+							for _, arg := range ret2.Names {
+								dirty_vals[arg.Name] = 1
+							}
+						}
+					}
+				}
+				// C3
+				if ret4, ok := n2.(*ast.BinaryExpr); ok {
+					if checkBinaryExprOp(n2, "-") {
+						exp1 = ""
+						exp2 = ""
+						if ret5, ok := ret4.X.(*ast.Ident); ok {
+							exp1 = ret5.Name
+						} else if ret6, ok := ret4.X.(*ast.BasicLit); ok {
+							exp1 = ret6.Value
+						}
+						if ret7, ok := ret4.Y.(*ast.Ident); ok {
+							exp2 = ret7.Name
+						} else if ret8, ok := ret4.Y.(*ast.BasicLit); ok {
+							exp2 = ret8.Value
+						}
+						if dirty_vals[exp1] == 1 || dirty_vals[exp2] == 1 {
+							location = fset.Position(ret4.OpPos).Line
+							expr = "goassert.AssertUnderflow(" + exp1 + ", " + exp2 + ", " + exp1 + "-" + exp2 + ")"
+							// NEW ASSERTION
+							result = append(result, assertion{file_path, location, expr, weak_id})
+						}
+					}
+				}
+				return true
+			})
+		}
+		return true
+	})
 	return
+}
+
+func isInteger(typeName string) bool {
+	return typeName == "int8" || typeName == "int16" || typeName == "int32"
+}
+
+func hasCallExpr(node ast.Node) bool {
+	result := false
+	ast.Inspect(node, func(n1 ast.Node) bool {
+		if _, ok := n1.(*ast.CallExpr); ok {
+			result = true
+			return false
+		}
+		return true
+	})
+	return result
+}
+
+func checkBinaryExprOp(node ast.Node, op string) bool {
+	if ret, ok := node.(*ast.BinaryExpr); ok {
+		if ret.Op.String() == op {
+			return true
+		}
+	}
+	return false
 }

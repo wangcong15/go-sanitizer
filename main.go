@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
@@ -10,19 +11,20 @@ import (
 	"path"
 	"sort"
 	"strings"
-	// "go/ast"
 )
 
 var (
-	p         string
-	rec_chan  chan assertionSlice
-	default_p string
+	flag_p     string
+	flag_debug bool
+	rec_chan   chan assertionSlice
+	default_p  string
 )
 
 func init() {
-	flag.StringVar(&p, "p", "", "set a golang package to recommend assertions")
+	flag.StringVar(&flag_p, "p", "", "set a golang package to recommend assertions")
+	flag.BoolVar(&flag_debug, "d", false, "show abstract syntax tree")
 	rec_chan = make(chan assertionSlice)
-	default_p = "../cwe-testsuite-golang-bak/incorrect-calculation-682/wrap-arround-error-128/int-int32"
+	default_p = "../cwe-testsuite-golang-bak/incorrect-calculation-682/integer-underflow-wrap-or-wraparound-191/int8"
 }
 
 func main() {
@@ -31,24 +33,24 @@ func main() {
 	var file_path string
 	// Flag Parse
 	flag.Parse()
-	if p == "" {
+	if flag_p == "" {
 		log.Println("==> Package path should not be empty. Use -p to set.")
 		// return
-		p = default_p
+		flag_p = default_p
 	}
-	log.Printf("==> Package path is set: %v\n", p)
+	log.Printf("==> Package path is set: %v\n", flag_p)
 
 	// Read File List
-	if s, err := os.Stat(p); err != nil || !s.IsDir() {
+	if s, err := os.Stat(flag_p); err != nil || !s.IsDir() {
 		log.Println("==> Package path does not exist")
 		return
 	}
-	files, _ := ioutil.ReadDir(p)
+	files, _ := ioutil.ReadDir(flag_p)
 	chan_counter = 0
 	log.Println("==> Source file list: ")
 	for _, f := range files {
 		if strings.HasSuffix(f.Name(), ".go") && !f.IsDir() {
-			file_path = path.Join(p, f.Name())
+			file_path = path.Join(flag_p, f.Name())
 			chan_counter += 1
 			// handle source files in concurrent mode
 			go rec(file_path)
@@ -84,7 +86,9 @@ func rec(file_path string) {
 	if err != nil {
 		panic(err)
 	}
-	// ast.Print(fset, f)
+	if flag_debug {
+		ast.Print(fset, f)
+	}
 
 	// checkers in concurrent mode
 	result = append(result, C777(fset, f, file_path)...)
@@ -123,6 +127,7 @@ func insert(asserts assertionSlice) {
 				if j >= len(code_arr[val.line_no]) {
 					break
 				}
+				log.Println(string(code_arr[val.line_no][j]))
 				if code_arr[val.line_no][j] == '\t' {
 					code_arr[val.line_no-2] += "\t"
 				} else {
