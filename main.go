@@ -24,7 +24,7 @@ func init() {
 	flag.StringVar(&flag_p, "p", "", "set a golang package to recommend assertions")
 	flag.BoolVar(&flag_debug, "d", false, "show abstract syntax tree")
 	rec_chan = make(chan assertionSlice)
-	default_p = "../cwe-testsuite-golang-bak/incorrect-calculation-682/integer-underflow-wrap-or-wraparound-191/int8"
+	default_p = "../cwe-testsuite-golang-bak/incorrect-comparison-697/floating-point-comparison-with-incorrect-operator-1077/example"
 }
 
 func main() {
@@ -94,7 +94,6 @@ func rec(file_path string) {
 	result = append(result, C777(fset, f, file_path)...)
 	result = append(result, C478(fset, f, file_path)...)
 	result = append(result, C839(fset, f, file_path)...)
-	result = append(result, C486(fset, f, file_path)...)
 	result = append(result, C1077(fset, f, file_path)...)
 	result = append(result, C785(fset, f, file_path)...)
 	result = append(result, C466(fset, f, file_path)...)

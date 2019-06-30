@@ -64,13 +64,33 @@ func C839(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 	return
 }
 
-// CWE-486: Comparison of Classes by Name
-func C486(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
-	return
-}
-
 // CWE-1077: Floating Point Comparison with Incorrect Operator
 func C1077(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
+	var exp1 string
+	var exp2 string
+	var expr string
+	var location int
+	var weak_id int = 777
+	ast.Inspect(f, func(n1 ast.Node) bool {
+		// C1: scope=ast.FuncDecl
+		if ret, ok := n1.(*ast.FuncDecl); ok {
+			ast.Inspect(ret, func(n2 ast.Node) bool {
+				// C2
+				if ret2, ok := n2.(*ast.BinaryExpr); ok {
+					if checkBinaryExprOp(ret2, "==") {
+						exp1 = getExpr(ret2.X)
+						exp2 = getExpr(ret2.Y)
+						expr = "goassert.AssertPresion(" + exp1 + ", " + exp2 + ")"
+						location = fset.Position(ret2.OpPos).Line
+						// NEW ASSERTION
+						result = append(result, assertion{file_path, location, expr, weak_id})
+					}
+				}
+				return true
+			})
+		}
+		return true
+	})
 	return
 }
 
@@ -168,18 +188,8 @@ func C190(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 				// C3
 				if ret4, ok := n2.(*ast.BinaryExpr); ok {
 					if checkBinaryExprOp(n2, "+") {
-						exp1 = ""
-						exp2 = ""
-						if ret5, ok := ret4.X.(*ast.Ident); ok {
-							exp1 = ret5.Name
-						} else if ret6, ok := ret4.X.(*ast.BasicLit); ok {
-							exp1 = ret6.Value
-						}
-						if ret7, ok := ret4.Y.(*ast.Ident); ok {
-							exp2 = ret7.Name
-						} else if ret8, ok := ret4.Y.(*ast.BasicLit); ok {
-							exp2 = ret8.Value
-						}
+						exp1 = getExpr(ret4.X)
+						exp2 = getExpr(ret4.Y)
 						if dirty_vals[exp1] == 1 || dirty_vals[exp2] == 1 {
 							location = fset.Position(ret4.OpPos).Line
 							expr = "goassert.AssertOverflow(" + exp1 + ", " + exp2 + ", " + exp1 + "+" + exp2 + ")"
@@ -221,18 +231,8 @@ func C191(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 				// C3
 				if ret4, ok := n2.(*ast.BinaryExpr); ok {
 					if checkBinaryExprOp(n2, "-") {
-						exp1 = ""
-						exp2 = ""
-						if ret5, ok := ret4.X.(*ast.Ident); ok {
-							exp1 = ret5.Name
-						} else if ret6, ok := ret4.X.(*ast.BasicLit); ok {
-							exp1 = ret6.Value
-						}
-						if ret7, ok := ret4.Y.(*ast.Ident); ok {
-							exp2 = ret7.Name
-						} else if ret8, ok := ret4.Y.(*ast.BasicLit); ok {
-							exp2 = ret8.Value
-						}
+						exp1 = getExpr(ret4.X)
+						exp2 = getExpr(ret4.Y)
 						if dirty_vals[exp1] == 1 || dirty_vals[exp2] == 1 {
 							location = fset.Position(ret4.OpPos).Line
 							expr = "goassert.AssertUnderflow(" + exp1 + ", " + exp2 + ", " + exp1 + "-" + exp2 + ")"
@@ -272,4 +272,13 @@ func checkBinaryExprOp(node ast.Node, op string) bool {
 		}
 	}
 	return false
+}
+
+func getExpr(X ast.Node) (exp1 string) {
+	if ret5, ok := X.(*ast.Ident); ok {
+		exp1 = ret5.Name
+	} else if ret6, ok := X.(*ast.BasicLit); ok {
+		exp1 = ret6.Value
+	}
+	return
 }
