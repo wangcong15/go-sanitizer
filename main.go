@@ -24,7 +24,7 @@ func init() {
 	flag.StringVar(&flag_p, "p", "", "set a golang package to recommend assertions")
 	flag.BoolVar(&flag_debug, "d", false, "show abstract syntax tree")
 	rec_chan = make(chan assertionSlice)
-	default_p = "../cwe-testsuite-golang-bak/incorrect-access-of-indexable-resource-118/untrusted-pointer-dereference-822/uintptr"
+	default_p = "."
 }
 
 func main() {
@@ -111,13 +111,13 @@ func insert(asserts assertionSlice) {
 		if b, err := ioutil.ReadFile(val.file_path); err == nil {
 			raw_code := string(b)
 			code_arr := strings.Split(raw_code, "\n")
-			if !strings.Contains(raw_code, "goassert") {
-				for i := range code_arr {
-					if strings.HasPrefix(code_arr[i], "package ") {
-						code_arr[i] += "\nimport \"github.com/wangcong15/goassert\""
-					}
-				}
-			}
+			// if !strings.Contains(raw_code, "goassert") {
+			// 	for i := range code_arr {
+			// 		if strings.HasPrefix(code_arr[i], "package ") {
+			// 			code_arr[i] += "\nimport \"github.com/wangcong15/goassert\""
+			// 		}
+			// 	}
+			// }
 			code_arr[val.line_no-2] += "\n"
 			for j := 0; ; j++ {
 				if j >= len(code_arr[val.line_no]) {
