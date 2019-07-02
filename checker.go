@@ -120,10 +120,12 @@ func C1077(fset *token.FileSet, f *ast.File, file_path string) (result assertion
 					if checkBinaryExprOp(ret2, "==") {
 						exp1 = getExpr(ret2.X)
 						exp2 = getExpr(ret2.Y)
-						expr = "goassert.AssertPresion(" + exp1 + ", " + exp2 + ")"
-						location = fset.Position(ret2.OpPos).Line + 1
-						// NEW ASSERTION
-						result = append(result, assertion{file_path, location, expr, weak_id})
+						if exp1 != "" && exp2 != "" {
+							expr = "goassert.AssertPresion(" + exp1 + ", " + exp2 + ")"
+							location = fset.Position(ret2.OpPos).Line + 1
+							// NEW ASSERTION
+							result = append(result, assertion{file_path, location, expr, weak_id})
+						}
 					}
 				}
 				return true
