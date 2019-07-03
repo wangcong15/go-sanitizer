@@ -68,6 +68,9 @@ func C478(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 			ast.Inspect(ret, func(n2 ast.Node) bool {
 				if ret2, ok := n2.(*ast.SwitchStmt); ok {
 					variable = getExpr(ret2.Tag)
+					if variable == "" {
+						return true
+					}
 					cases = []string{}
 					flag = true
 					for _, c := range ret2.Body.List {
@@ -186,7 +189,7 @@ func C466(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 						var_list = append(var_list, getExpr(v))
 					}
 					for i, v := range ret2.Rhs {
-						if _, ok := v.(*ast.CallExpr); ok {
+						if _, ok := v.(*ast.CallExpr); ok && var_list[i] != "" && var_list[i] != "err" && var_list[i] != "e" && var_list[i] != "_" {
 							expr = "goassert.AssertNNil(" + var_list[i] + ")"
 							location = fset.Position(ret2.TokPos).Line + 1
 							// NEW ASSERTION
@@ -233,7 +236,7 @@ func C824(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 					for _, name := range ret3.Args {
 						temp_name := getExpr(name)
 						if uninit_vars[temp_name] == 1 {
-							expr = "goassert.AssertNValEq(" + temp_name + ", nil)"
+							expr = "goassert.AssertNNil(" + temp_name + ")"
 							location = fset.Position(ret3.Lparen).Line
 							// NEW ASSERTION
 							result = append(result, assertion{file_path, location, expr, weak_id})

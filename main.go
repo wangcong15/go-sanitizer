@@ -107,32 +107,42 @@ func rec(file_path string) {
 // Golang does not support transformation from ast to source code.
 // Thus we insert the assertion with file R/W.
 func insert(asserts assertionSlice) {
+	var fileAsserts map[string]assertionSlice = make(map[string]assertionSlice)
 	for _, val := range asserts {
-		if b, err := ioutil.ReadFile(val.file_path); err == nil {
-			raw_code := string(b)
-			code_arr := strings.Split(raw_code, "\n")
-			// if !strings.Contains(raw_code, "goassert") {
-			// 	for i := range code_arr {
-			// 		if strings.HasPrefix(code_arr[i], "package ") {
-			// 			code_arr[i] += "\nimport \"github.com/wangcong15/goassert\""
-			// 		}
-			// 	}
-			// }
-			code_arr[val.line_no-2] += "\n"
-			for j := 0; ; j++ {
-				if j >= len(code_arr[val.line_no]) {
-					break
+		fileAsserts[val.file_path] = append(fileAsserts[val.file_path], val)
+	}
+	for fp, v := range fileAsserts {
+		for _, val := range v {
+			if b, err := ioutil.ReadFile(val.file_path); err == nil {
+				raw_code := string(b)
+				code_arr := strings.Split(raw_code, "\n")
+				code_arr[val.line_no-2] += "\n"
+				for j := 0; ; j++ {
+					if j >= len(code_arr[val.line_no]) {
+						break
+					}
+					if code_arr[val.line_no][j] == '\t' {
+						code_arr[val.line_no-2] += "\t"
+					} else {
+						break
+					}
 				}
-				if code_arr[val.line_no][j] == '\t' {
-					code_arr[val.line_no-2] += "\t"
-				} else {
-					break
+				code_arr[val.line_no-2] += val.expression
+				new_code := strings.Join(code_arr, "\n")
+				if ioutil.WriteFile(val.file_path, []byte(new_code), 0644) != nil {
+					log.Printf("==> Error in writing %v\n", val.file_path)
 				}
 			}
-			code_arr[val.line_no-2] += val.expression
-			new_code := strings.Join(code_arr, "\n")
-			if ioutil.WriteFile(val.file_path, []byte(new_code), 0644) != nil {
-				log.Printf("==> Error in writing %v\n", val.file_path)
+		}
+		if b, err := ioutil.ReadFile(fp); err == nil {
+			raw_code := string(b)
+			code_arr := strings.Split(raw_code, "\n")
+			if !strings.Contains(raw_code, "github.com/wangcong15/goassert") {
+				for i := range code_arr {
+					if strings.HasPrefix(code_arr[i], "package ") {
+						code_arr[i] += "\nimport \"github.com/wangcong15/goassert\""
+					}
+				}
 			}
 		}
 	}
