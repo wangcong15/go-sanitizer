@@ -1,9 +1,61 @@
 package main
 
 import (
+	"bytes"
 	"go/ast"
+	"go/format"
 	"go/token"
+	"strconv"
+	"strings"
 )
+
+func gofmtFile(fset *token.FileSet, f *ast.File) (string, error) {
+	var buf bytes.Buffer
+	if err := format.Node(&buf, fset, f); err != nil {
+		return "", err
+	}
+	return string(buf.Bytes()), nil
+}
+
+func AddImport(fset *token.FileSet, f *ast.File) string {
+	newImport := &ast.ImportSpec{
+		Path: &ast.BasicLit{
+			Kind:  token.STRING,
+			Value: "\"github.com/wangcong15/goassert\"",
+		},
+	}
+
+	hasGoassert := false
+	var tempPos token.Pos
+	ast.Inspect(f, func(n1 ast.Node) bool {
+		ret, ok := n1.(*ast.GenDecl)
+		if ok && ret.Tok == token.IMPORT {
+			for _, v := range ret.Specs {
+				if ret2, ok := v.(*ast.ImportSpec); ok {
+					if ret3 := ret2.Path; ok && ret3.Kind == token.STRING && ret3.Value == "\"github.com/wangcong15/goassert\"" {
+						hasGoassert = true
+						return false
+					} else {
+						tempPos = ret2.Pos()
+					}
+				}
+			}
+			if !hasGoassert {
+				newImport.Path.ValuePos = tempPos
+				newImport.EndPos = tempPos
+				f.Imports = append(f.Imports, newImport)
+				ret.Specs = append(ret.Specs, newImport)
+			}
+		}
+		return true
+	})
+
+	raw_code, err := gofmtFile(fset, f)
+	if err != nil {
+		panic(err)
+	}
+	return raw_code
+}
 
 // CWE-777: Regular Expression without Anchors
 func C777(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
@@ -75,14 +127,12 @@ func C478(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 					flag = true
 					for _, c := range ret2.Body.List {
 						if ret3, ok := c.(*ast.CaseClause); ok {
+							if len(ret3.List) == 0 {
+								flag = false
+								break
+							}
 							for _, e := range ret3.List {
-								new_case_exp := getExpr(e)
-								if new_case_exp == "default" {
-									flag = false
-									break
-								} else {
-									cases = append(cases, new_case_exp)
-								}
+								cases = append(cases, getExpr(e))
 							}
 						}
 					}
@@ -123,7 +173,10 @@ func C1077(fset *token.FileSet, f *ast.File, file_path string) (result assertion
 					if checkBinaryExprOp(ret2, "==") {
 						exp1 = getExpr(ret2.X)
 						exp2 = getExpr(ret2.Y)
-						if exp1 != "" && exp2 != "" {
+						if exp1 != "" && exp1 != "err" && exp2 != "" && exp2 != "nil" {
+							if _, err := strconv.Atoi(exp2); err == nil {
+								return true
+							}
 							expr = "goassert.AssertPresion(" + exp1 + ", " + exp2 + ")"
 							location = fset.Position(ret2.OpPos).Line + 1
 							// NEW ASSERTION
@@ -191,7 +244,12 @@ func C466(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 					for i, v := range ret2.Rhs {
 						if _, ok := v.(*ast.CallExpr); ok && var_list[i] != "" && var_list[i] != "err" && var_list[i] != "e" && var_list[i] != "_" {
 							expr = "goassert.AssertNNil(" + var_list[i] + ")"
-							location = fset.Position(ret2.TokPos).Line + 1
+							ret3 := ret2.Rhs[len(ret2.Rhs)-1]
+							if ret4, ok := ret3.(*ast.CallExpr); ok {
+								location = fset.Position(ret4.Rparen).Line + 1
+							} else {
+								location = fset.Position(ret2.TokPos).Line + 1
+							}
 							// NEW ASSERTION
 							result = append(result, assertion{file_path, location, expr, weak_id})
 						}
@@ -237,7 +295,7 @@ func C824(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 						temp_name := getExpr(name)
 						if uninit_vars[temp_name] == 1 {
 							expr = "goassert.AssertNNil(" + temp_name + ")"
-							location = fset.Position(ret3.Lparen).Line
+							location = fset.Position(ret3.Rparen).Line + 1
 							// NEW ASSERTION
 							result = append(result, assertion{file_path, location, expr, weak_id})
 						}
@@ -269,6 +327,8 @@ func C128(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 					for _, args := range ret3 {
 						if ret4, ok := args.(*ast.Ident); ok {
 							val_list = append(val_list, ret4.Name)
+						} else {
+							val_list = append(val_list, "")
 						}
 					}
 					ret5 := ret2.Rhs
@@ -276,11 +336,15 @@ func C128(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 					for idx, args := range ret5 {
 						if ret6, ok := args.(*ast.CallExpr); ok {
 							if ret7, ok := ret6.Fun.(*ast.Ident); ok {
-								if ret7.Name == "int8" || ret7.Name == "int16" || ret7.Name == "int32" {
-									if ret8, ok := ret6.Args[0].(*ast.Ident); ok {
-										expr = "goassert.AssertValEq(" + val_list[idx] + ", " + ret8.Name + ")"
-										// NEW ASSERTION
-										result = append(result, assertion{file_path, location, expr, weak_id})
+								if ret7.Name == "int8" || ret7.Name == "int16" || ret7.Name == "int32" || ret7.Name == "uint8" || ret7.Name == "uint16" || ret7.Name == "uint32" {
+									if len(ret6.Args) > 0 {
+										if ret8, ok := ret6.Args[0].(*ast.Ident); ok {
+											if val_list[idx] != "" {
+												expr = "goassert.AssertValEq(" + val_list[idx] + ", " + ret8.Name + ")"
+												// NEW ASSERTION
+												result = append(result, assertion{file_path, location, expr, weak_id})
+											}
+										}
 									}
 								}
 							}
@@ -306,6 +370,13 @@ func C190(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 	ast.Inspect(f, func(n1 ast.Node) bool {
 		// C1: scope=ast.FuncDecl
 		if ret, ok := n1.(*ast.FuncDecl); ok {
+			tys := ret.Type
+			for _, pp := range tys.Params.List {
+				for _, nn := range pp.Names {
+					dirty_vals[getExpr(nn)] = 1
+				}
+			}
+
 			ast.Inspect(ret, func(n2 ast.Node) bool {
 				// C2
 				if ret2, ok := n2.(*ast.ValueSpec); ok {
@@ -322,7 +393,7 @@ func C190(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 					if checkBinaryExprOp(n2, "+") {
 						exp1 = getExpr(ret4.X)
 						exp2 = getExpr(ret4.Y)
-						if dirty_vals[exp1] == 1 || dirty_vals[exp2] == 1 {
+						if (dirty_vals[exp1] == 1 || dirty_vals[exp2] == 1) && !strings.Contains(exp1, "\"") && !strings.Contains(exp2, "\"") && exp1 != "" && exp2 != "" {
 							location = fset.Position(ret4.OpPos).Line
 							expr = "goassert.AssertOverflow(" + exp1 + ", " + exp2 + ", " + exp1 + "+" + exp2 + ")"
 							// NEW ASSERTION
@@ -349,6 +420,12 @@ func C191(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 	ast.Inspect(f, func(n1 ast.Node) bool {
 		// C1: scope=ast.FuncDecl
 		if ret, ok := n1.(*ast.FuncDecl); ok {
+			tys := ret.Type
+			for _, pp := range tys.Params.List {
+				for _, nn := range pp.Names {
+					dirty_vals[getExpr(nn)] = 1
+				}
+			}
 			ast.Inspect(ret, func(n2 ast.Node) bool {
 				// C2
 				if ret2, ok := n2.(*ast.ValueSpec); ok {
@@ -365,7 +442,7 @@ func C191(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 					if checkBinaryExprOp(n2, "-") {
 						exp1 = getExpr(ret4.X)
 						exp2 = getExpr(ret4.Y)
-						if dirty_vals[exp1] == 1 || dirty_vals[exp2] == 1 {
+						if (dirty_vals[exp1] == 1 || dirty_vals[exp2] == 1) && !strings.Contains(exp2, "\"") && exp1 != "" && exp2 != "" {
 							location = fset.Position(ret4.OpPos).Line
 							expr = "goassert.AssertUnderflow(" + exp1 + ", " + exp2 + ", " + exp1 + "-" + exp2 + ")"
 							// NEW ASSERTION

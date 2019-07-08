@@ -16,6 +16,7 @@ import (
 var (
 	flag_p     string
 	flag_debug bool
+	flag_c     int
 	rec_chan   chan assertionSlice
 	default_p  string
 )
@@ -23,6 +24,7 @@ var (
 func init() {
 	flag.StringVar(&flag_p, "p", "", "set a golang package to recommend assertions")
 	flag.BoolVar(&flag_debug, "d", false, "show abstract syntax tree")
+	flag.IntVar(&flag_c, "c", 0, "CWE ID to check")
 	rec_chan = make(chan assertionSlice)
 	default_p = "."
 }
@@ -82,7 +84,7 @@ func rec(file_path string) {
 	}
 	raw_code = string(b)
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "", raw_code, 0)
+	f, err := parser.ParseFile(fset, "", raw_code, parser.ParseComments)
 	if err != nil {
 		panic(err)
 	}
@@ -91,15 +93,36 @@ func rec(file_path string) {
 	}
 
 	// checkers in concurrent mode
-	result = append(result, C777(fset, f, file_path)...)
-	result = append(result, C478(fset, f, file_path)...)
-	result = append(result, C1077(fset, f, file_path)...)
-	result = append(result, C785(fset, f, file_path)...)
-	result = append(result, C466(fset, f, file_path)...)
-	result = append(result, C824(fset, f, file_path)...)
-	result = append(result, C128(fset, f, file_path)...)
-	result = append(result, C190(fset, f, file_path)...)
-	result = append(result, C191(fset, f, file_path)...)
+	switch flag_c {
+	case 777:
+		result = append(result, C777(fset, f, file_path)...)
+	case 478:
+		result = append(result, C478(fset, f, file_path)...)
+	case 1077:
+		result = append(result, C1077(fset, f, file_path)...)
+	case 785:
+		result = append(result, C785(fset, f, file_path)...)
+	case 466:
+		result = append(result, C466(fset, f, file_path)...)
+	case 824:
+		result = append(result, C824(fset, f, file_path)...)
+	case 128:
+		result = append(result, C128(fset, f, file_path)...)
+	case 190:
+		result = append(result, C190(fset, f, file_path)...)
+	case 191:
+		result = append(result, C191(fset, f, file_path)...)
+	default:
+		result = append(result, C777(fset, f, file_path)...)
+		result = append(result, C478(fset, f, file_path)...)
+		result = append(result, C1077(fset, f, file_path)...)
+		result = append(result, C785(fset, f, file_path)...)
+		result = append(result, C466(fset, f, file_path)...)
+		result = append(result, C824(fset, f, file_path)...)
+		result = append(result, C128(fset, f, file_path)...)
+		result = append(result, C190(fset, f, file_path)...)
+		result = append(result, C191(fset, f, file_path)...)
+	}
 
 	rec_chan <- result
 }
@@ -111,37 +134,37 @@ func insert(asserts assertionSlice) {
 	for _, val := range asserts {
 		fileAsserts[val.file_path] = append(fileAsserts[val.file_path], val)
 	}
-	for fp, v := range fileAsserts {
+	for _, v := range fileAsserts {
 		for _, val := range v {
 			if b, err := ioutil.ReadFile(val.file_path); err == nil {
 				raw_code := string(b)
 				code_arr := strings.Split(raw_code, "\n")
-				code_arr[val.line_no-2] += "\n"
-				for j := 0; ; j++ {
+				code_arr[val.line_no-1] += "\n"
+				var j int
+				for j = 0; ; j++ {
 					if j >= len(code_arr[val.line_no]) {
 						break
 					}
 					if code_arr[val.line_no][j] == '\t' {
-						code_arr[val.line_no-2] += "\t"
+						code_arr[val.line_no-1] += "\t"
 					} else {
 						break
 					}
 				}
-				code_arr[val.line_no-2] += val.expression
+				if j == 0 {
+					break
+				}
+				code_arr[val.line_no-1] += val.expression
 				new_code := strings.Join(code_arr, "\n")
+				// log.Println(new_code)
+				fset := token.NewFileSet()
+				f, err := parser.ParseFile(fset, "", new_code, parser.ParseComments)
+				if err != nil {
+					continue
+				}
+				new_code = AddImport(fset, f)
 				if ioutil.WriteFile(val.file_path, []byte(new_code), 0644) != nil {
 					log.Printf("==> Error in writing %v\n", val.file_path)
-				}
-			}
-		}
-		if b, err := ioutil.ReadFile(fp); err == nil {
-			raw_code := string(b)
-			code_arr := strings.Split(raw_code, "\n")
-			if !strings.Contains(raw_code, "github.com/wangcong15/goassert") {
-				for i := range code_arr {
-					if strings.HasPrefix(code_arr[i], "package ") {
-						code_arr[i] += "\nimport \"github.com/wangcong15/goassert\""
-					}
 				}
 			}
 		}
