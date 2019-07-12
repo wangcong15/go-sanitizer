@@ -227,6 +227,7 @@ func C785(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 
 // CWE-466: Return of Pointer Value Outside of Expected Range
 func C466(fset *token.FileSet, f *ast.File, file_path string) (result assertionSlice) {
+	var ptr_dict map[string]int = make(map[string]int)
 	var var_list []string
 	var expr string
 	var location int
@@ -235,14 +236,23 @@ func C466(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 		// C1: scope=ast.FuncDecl
 		if ret, ok := n1.(*ast.FuncDecl); ok {
 			ast.Inspect(ret, func(n2 ast.Node) bool {
-				// C2
+				// C2 collect pointers
+				if ret5, ok := n2.(*ast.ValueSpec); ok {
+					if _, ok := ret5.Type.(*ast.StarExpr); ok {
+						for _, v := range ret5.Names {
+							ptr_dict[getExpr(v)] = 1
+						}
+					}
+				}
+
+				// C3
 				if ret2, ok := n2.(*ast.AssignStmt); ok {
 					var_list = []string{}
 					for _, v := range ret2.Lhs {
 						var_list = append(var_list, getExpr(v))
 					}
 					for i, v := range ret2.Rhs {
-						if _, ok := v.(*ast.CallExpr); ok && var_list[i] != "" && var_list[i] != "err" && var_list[i] != "e" && var_list[i] != "_" {
+						if _, ok := v.(*ast.CallExpr); ok && var_list[i] != "" && var_list[i] != "err" && var_list[i] != "e" && var_list[i] != "_" && ptr_dict[var_list[i]] == 1 {
 							expr = "goassert.AssertNNil(" + var_list[i] + ")"
 							ret3 := ret2.Rhs[len(ret2.Rhs)-1]
 							if ret4, ok := ret3.(*ast.CallExpr); ok {
