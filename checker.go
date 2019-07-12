@@ -284,10 +284,13 @@ func C824(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 		// C1: scope = ast.FuncDecl
 		if ret, ok := n1.(*ast.FuncDecl); ok {
 			ast.Inspect(ret, func(n2 ast.Node) bool {
+
 				// C2
 				if ret2, ok := n2.(*ast.ValueSpec); ok && len(ret2.Values) == 0 {
-					for _, name := range ret2.Names {
-						uninit_vars[getExpr(name)] = 1
+					if _, ok := ret2.Type.(*ast.StarExpr); ok {
+						for _, name := range ret2.Names {
+							uninit_vars[getExpr(name)] = 1
+						}
 					}
 				}
 				// C3
@@ -426,7 +429,7 @@ func C191(fset *token.FileSet, f *ast.File, file_path string) (result assertionS
 	var exp2 string
 	var expr string
 	var location int
-	var weak_id int = 190
+	var weak_id int = 191
 	ast.Inspect(f, func(n1 ast.Node) bool {
 		// C1: scope=ast.FuncDecl
 		if ret, ok := n1.(*ast.FuncDecl); ok {
