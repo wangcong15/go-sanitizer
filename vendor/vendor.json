@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "W9kOOpakUiGEo1mugBulKPUS3kE=",
+			"path": "github.com/wangcong15/goassert",
+			"revision": "0990e1808895b357acb8e1ea8abdb5699794246f",
+			"revisionTime": "2019-07-12T15:40:04Z"
+		}
+	],
+	"rootPath": "github.com/wangcong15/go-sanitizer"
+}
