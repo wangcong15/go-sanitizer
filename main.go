@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -14,16 +15,18 @@ import (
 )
 
 var (
-	flag_p     string
-	flag_debug bool
-	flag_c     int
-	rec_chan   chan assertionSlice
-	default_p  string
+	flag_p      string
+	flag_debug  bool
+	flag_manual bool
+	flag_c      int
+	rec_chan    chan assertionSlice
+	default_p   string
 )
 
 func init() {
 	flag.StringVar(&flag_p, "p", "", "set a golang package to recommend assertions")
 	flag.BoolVar(&flag_debug, "d", false, "show abstract syntax tree")
+	flag.BoolVar(&flag_manual, "m", false, "manually choose assertions")
 	flag.IntVar(&flag_c, "c", 0, "CWE ID to check")
 	rec_chan = make(chan assertionSlice)
 	default_p = "."
@@ -63,6 +66,18 @@ func main() {
 		if ok {
 			asserts = append(asserts, val...)
 		}
+	}
+	if flag_manual {
+		var newAsserts assertionSlice
+		var userInput string
+		for _, assert := range asserts {
+			fmt.Printf("Assert: %v. Choose it? (y/n)\n", assert)
+			fmt.Scanln(&userInput)
+			if userInput == "y" {
+				newAsserts = append(newAsserts, assert)
+			}
+		}
+		asserts = newAsserts
 	}
 	sort.Sort(asserts)
 	log.Println("==> Assertion list: ")
