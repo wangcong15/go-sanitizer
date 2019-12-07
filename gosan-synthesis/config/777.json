@@ -1,0 +1,82 @@
+{
+    "funcName": "AssertStrNotIn",
+    "bugType": "777",
+    "genAssert": {
+        "lineNo": "c.Fset.Position(lv.x2.Lparen).Line",
+        "params": "\"\\\"..\\\", \" + lv.x8.Name"
+    },
+    "localVars": [{
+            "name": "x1",
+            "type": "*ast.FuncDecl",
+            "rule": {
+                "type": "inspect",
+                "root": "c.F"
+            }
+        },{
+            "name": "x2",
+            "type": "*ast.CallExpr",
+            "rule": {
+                "type": "inspect",
+                "root": "x1"
+            }
+        },{
+            "name": "x3",
+            "type": "*ast.SelectorExpr",
+            "rule": {
+                "type": "element",
+                "root": "x2",
+                "attr": "Fun"
+            }
+        },{
+            "name": "x4",
+            "type": "*ast.Ident",
+            "rule": {
+                "type": "element",
+                "root": "x3",
+                "attr": "X"
+            },
+            "filter": "x3.Sel.Name == \"MatchString\"",
+            "callback": "lv.valMap[x5.Name] = 1"
+        },{
+            "name": "x5",
+            "type": "*ast.Ident",
+            "rule": {
+                "type": "element",
+                "root": "x2",
+                "attr": "Args[1]"
+            },
+            "filter": "x4.Name == \"regexp\""
+        },{
+            "name": "x6",
+            "type": "*ast.Ident",
+            "rule": {
+                "type": "element",
+                "root": "x3",
+                "attr": "X"
+            },
+            "filter": "x3.Sel.Name == \"Join\""
+        },{
+            "name": "x7",
+            "type": "[]ast.Expr",
+            "rule": {
+                "type": "element",
+                "root": "x6",
+                "attr": "Args"
+            },
+            "filter": "x6.Name == \"path\""
+        },{
+            "name": "x8",
+            "type": "*ast.Ident",
+            "rule": {
+                "type": "foreach",
+                "root": "x7"
+            },
+            "callback": "if lv.valMap[x8.Name] == 1 {\ngenAssert(c, lv)\n}"
+        },{
+            "name": "valMap",
+            "type": "map[string]int",
+            "init": "lv.valMap = make(map[string]int)",
+            "extra": true
+        }
+    ]
+}
