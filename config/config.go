@@ -2,9 +2,12 @@ package config
 
 import (
 	"fmt"
+	"bytes"
 	"log"
 	"os"
+	"path"
 	"strings"
+	"os/exec"
 
 	"github.com/Unknwon/goconfig"
 	"github.com/wangcong15/go-sanitizer/checkers"
@@ -32,7 +35,9 @@ type Config struct {
 // Load : configure file
 func Load(c *Config) {
 	// load configure parameters
-	configFile := fmt.Sprintf("config/config-%s.ini", c.ArgLanguage)
+	absPath := toAbsPath("github.com/wangcong15/go-sanitizer/config")
+	configFile := fmt.Sprintf("config-%s.ini", c.ArgLanguage)
+	configFile = path.Join(absPath, configFile)
 	cfg, err := goconfig.LoadConfigFile(configFile)
 	if err != nil {
 		log.Println("非常抱歉，我们目前不支持该语言")
@@ -82,4 +87,26 @@ func (c Config) GetCWEs() []string {
 		return r
 	}
 	return strings.Split(c.ArgCWE, ",")
+}
+
+
+func toAbsPath(path string) (absPath string) {
+	var goListScript string
+	goListScript = fmt.Sprintf("go list -e -f {{.Dir}} %s", path)
+	absPath, _ = ExecShell(goListScript)
+	return
+}
+
+func ExecShell(s string) (string, string) {
+	cmd := exec.Command("/bin/bash", "-c", s)
+	var stdout, stderr bytes.Buffer
+	var outStr, errStr string
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	cmd.Run()
+	outStr, errStr = string(stdout.Bytes()), string(stderr.Bytes())
+	outStr = strings.TrimRight(outStr, "]\n")
+	errStr = strings.TrimRight(errStr, "]\n")
+	return outStr, errStr
 }

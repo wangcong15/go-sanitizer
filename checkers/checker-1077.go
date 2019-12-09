@@ -2,7 +2,7 @@ package checkers
 
 import (
 	"go/ast"
-
+	"strconv"
 	"github.com/wangcong15/go-sanitizer/code"
 )
 
@@ -41,7 +41,9 @@ func check1077x2(c *code.Code, x2 *ast.BinaryExpr, lv *localVars1077) {
 	if x2.Op.String() == "==" {
 		exp1 := getExpr(x2.X)
 		exp2 := getExpr(x2.Y)
-		if isNormalName(exp1) && isNormalName(exp2) {
+		if _, err := strconv.Atoi(exp2); err == nil || hasBool(exp1, exp2) {
+			return
+		} else if isNormalName(exp1) && isNormalName(exp2) {
 			lv.lineNo = c.Fset.Position(x2.OpPos).Line
 			lv.params = exp1 + ", " + exp2
 			genAssert1077(c, lv)

@@ -19,7 +19,7 @@ func testChecker() {
 	src := `package main
 	import "log"
 	func main() {
-		i := 1
+		i := 1 // good
 		hello := 2
 		world := 3
 	}`

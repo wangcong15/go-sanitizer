@@ -3,6 +3,7 @@ package checkers
 import (
 	"go/ast"
 	"reflect"
+	"strings"
 )
 
 // Inspect : search AST nodes
@@ -31,5 +32,14 @@ func getExpr(X ast.Node) (exp1 string) {
 }
 
 func isNormalName(name string) bool {
-	return (name != "" && name != "err" && name != "e" && name != "_")
+	return (name != "" && name != "err" && name != "e" && name != "_" && !strings.Contains(name, "\""))
+}
+
+func hasBool(names ...string) bool {
+	for _, n := range names {
+		if n == "true" || n == "false" {
+			return true
+		}
+	}
+	return false
 }

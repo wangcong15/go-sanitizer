@@ -1,0 +1,107 @@
+html, body {
+	height: 100%;
+}
+
+h4{
+	background-color: #D4D4D4;
+	text-align: center;
+	padding: 6px 0;
+}
+
+#bug_desc {
+	font-size:16px;
+	height:100px;
+	overflow-y: auto;
+}
+
+#editor {
+	/*height:670px;*/
+	height:94%;
+}
+
+.list-group {
+	height:77%;
+	overflow-y:auto;
+}
+
+.list-group-large {
+	height:83%;
+	overflow-y:auto;
+}
+
+.btn-primary {
+	color: #fff!important;
+    background-color: #337ab7!important;
+    border-color: #2e6da4!important;
+}
+
+.bug-item {
+	cursor: pointer;
+	text-align: center;
+}
+
+select{
+	width: 100%;
+}
+
+.setting-modal-bg{
+	position:fixed;
+	top:0;
+	bottom:0;
+	left:0;
+	right:0;
+	z-index: 100;
+	background-color: black;
+    opacity: 0.6;
+}
+
+.setting-modal{
+	position: fixed;
+    top: 20%;
+    bottom: 10%;
+    left: 25%;
+    background-color: white;
+    right: 25%;
+    border-radius: 10px;
+    z-index: 1000;
+    padding:0 100px 50px 100px;
+}
+
+.text-center{
+	text-align: center;
+}
+
+.btn-100 {
+	width: 100px;
+}
+
+.btn-70 {
+	width: 70px;
+}
+
+.modal-contents {
+	margin: 50px 0;
+}
+
+.head-icon {
+	height:16px;
+	cursor:hand;
+}
+
+#myTab {
+	list-style-type: none;
+	display:-webkit-box;
+	display:-webkit-flex;
+	display:-ms-flexbox;
+	display:flex;
+	-webkit-flex-wrap:nowrap;
+	-ms-flex-wrap:nowrap;
+	flex-wrap:nowrap;
+	-webkit-box-pack:justify;
+	-webkit-justify-content:space-between;
+	-ms-flex-pack:justify;
+	justify-content:space-between;
+	padding:0;
+	overflow:auto;
+}
+

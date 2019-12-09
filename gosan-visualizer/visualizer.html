@@ -1,0 +1,127 @@
+<html>
+<head>
+	<title>Bug Visualizer</title>
+	<meta http-equiv="Content-Type" content="text/html;" charset="UTF-8"/>
+	<link rel="stylesheet" href="lib/bootstrap.min.css">
+	<link rel="stylesheet" href="lib/visualizer.css">
+	<link rel="stylesheet" href="lib/zTreeStyle.css">
+</head>
+<style type="text/css">
+	@font-face {  
+	    font-family: pictos;  
+	    src:url('./lib/CenturyGothic.TTF');
+	} 
+	.sort-selected{
+		color:red;
+	}
+</style>
+<body style="font-family:pictos">
+	<script src="lib/angular.min.js"></script>
+	<script src="lib/ace/ace.js"></script>
+	<script src="lib/jquery-1.12.1.min.js"></script>
+	<script src="lib/jquery.ztree.core.min.js"></script>
+	<script src="lib/jquery.ztree.exhide.min.js"></script>
+	<script src="lib/bootstrap.min.js"></script>
+
+	<!-- Script: Angular-->
+	<script src="visualizer.js"></script>
+
+	<div ng-app="myApp" ng-controller="myCtrl">
+	    <div id="content">
+	    	<!-- setting modal -->
+	    	<div class="setting-modal-bg modal-unity" style="display:none" ng-click="closeSetting()"></div>
+	    	<div class="setting-modal modal-unity" style="display:none">
+	    		<h3 class="text-center">系统设置</h3>
+	    		<div class="row modal-contents">
+	    			<div class="col-md-3 text-center">
+	    				<h5>字体大小</h5>
+	    			</div>
+	    			<div class="col-md-9">
+	    				<button class="btn btn-default btn-70" ng-repeat="fontsize in fontsizes" ng-class="{'btn-primary': fontsize == currFs}" ng-click="selectFs($index)">{{ fontsize }}</button>
+	    			</div>
+	    			
+	    		</div>
+	    		<div class="row modal-contents">
+	    			<div class="col-md-3 text-center">
+	    				<h5>代码主题</h5>
+	    			</div>
+	    			<div class="col-md-9">
+	    				<select class="form-control" ng-change="selectTheme()" ng-model="currTheme">
+	    					<option ng-repeat="theme in themes" value="{{ theme }}">{{ theme }}</option>
+	    				</select>
+	    			</div>
+	    		</div>
+	    		<div class="text-center modal-footer">
+	    			<button class="btn btn-default btn-100" ng-click="closeSetting()">NO</button>
+	    			<button class="btn btn-primary btn-100" ng-click="saveSetting()">YES</button>
+	    		</div>
+	    	</div>
+	    	<!-- main contents -->
+			<div class="col-md-2" id="left-panel">
+				<div class="left-panel-content">
+					<h4>程序断言推荐历史</h4>
+					<select class="form-control" ng-change="changeHL(x)" ng-model="x">
+						<option ng-repeat="hl in history_list" value="{{$index}}">{{ hl }}</option>
+					</select>
+				</div>
+				<div class="left-panel-content">
+					<h4>文件浏览器</h4>
+					<input type="checkbox" ng-model="showAllFiles" ng-change="changeHL(hlIndex)"> 查看所有文件
+					<div id="tree" class="list-group-large ztree">
+					</div>
+				</div>
+			</div>
+			<div class="col-md-6" id="middle-panel">
+				<div>
+					<h4>
+						<img src="lib/setting.png" class="head-icon" ng-click="openSetting()">
+						当前代码 
+						<img ng-src="{{fullscreenIcon}}" class="head-icon" ng-click="toggleFullScreen()">
+					</h4>
+					<ul id="myTab" class="nav nav-tabs" style="margin-top:-10px" ng-show="openFilenames.length>0">
+						<li ng-repeat="filename in openFilenames" ng-class="{'active': currTab==filename}">
+							<a ng-click="changeTab(filename)" style="cursor:hand">
+								<img src="lib/close.png" style="height:10px" ng-click="closeTab(filename)">
+								{{ codeDic[filename][0] }}
+							</a>
+						</li>
+					</ul>
+					<div id="editor"></div>
+				</div>
+			</div>
+			<div class="col-md-4" id="right-panel">
+				<div>
+					<h4>推荐断言列表</h4>
+					<div class="list-group">
+						<input type="text" class="form-control" ng-model="searchword" placeholder="Search">
+						<table class="table table-striped" style="font-size:12px">
+						  <thead>
+						    <tr>
+						      <th class="bug-item" ng-click="changeOrderCond('temp_id')" ng-class="{'sort-selected': orderCondSelect=='temp_id'}">ID</th>
+						      <th class="bug-item" ng-click="changeOrderCond('cweid')" ng-class="{'sort-selected': orderCondSelect=='cweid'}">CWE</th>
+						      <th class="bug-item" ng-click="changeOrderCond('filepath')" ng-class="{'sort-selected': orderCondSelect=='filepath'}">文件</th>
+						      <th class="bug-item" ng-click="changeOrderCond('lineNo')" ng-class="{'sort-selected': orderCondSelect=='lineNo'}">行数</th>
+						      <th class="bug-item" ng-click="changeOrderCond('assertion')" ng-class="{'sort-selected': orderCondSelect=='assertion'}">断言</th>
+						    </tr>
+						  </thead>
+						  <tbody>
+						    <tr ng-repeat="bug in bugs | orderBy:orderCond | filter:searchword" ng-click="bugClick(bug)" ng-class="{ 'btn-primary': bug.isSelected }" class="bug-item" title="{{bug.desc}}">
+						      <td>{{ bug.temp_id }}</td>
+						      <td><span ng-repeat="cweid in bug.cweid" ng-click="cweclick(cweid, bug.desc)">{{cweid}}{{$last ? '' : ' / '}}</span></td>
+						      <td>{{ bug.filepath }}</td>
+						      <td>{{ bug.lineNo }}</td>
+						      <td>{{ bug.assertion }}</td>
+						    </tr>
+						  </tbody>
+						</table>
+					</div>
+				</div>
+				<div id="bug_desc">
+					<div ng-show="showCWE">{{cwe_desc[cwe_id]}}[<a target="_blank" href="http://cwe.mitre.org/data/definitions/{{cwe_id}}.html">CWE.{{cwe_id}}</a>]</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>

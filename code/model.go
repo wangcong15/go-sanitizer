@@ -14,6 +14,7 @@ type Code struct {
 	Fset     *token.FileSet
 	F        *ast.File
 	Asserts  AssertSlice
+	newCodeLines []string
 }
 
 // AssertSlice : list of struct Assertion
@@ -26,3 +27,11 @@ type Assertion struct {
 	LineNo   int
 	BugType  string
 }
+
+type sortByLine struct { AssertSlice }
+
+func (a sortByLine) Less(i, j int) bool {
+	return a.AssertSlice[i].LineNo > a.AssertSlice[j].LineNo
+}
+func (p AssertSlice) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+func (p AssertSlice) Len() int { return len(p) }

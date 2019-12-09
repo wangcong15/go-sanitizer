@@ -1,6 +1,8 @@
 package main
 
 import (
+	"path"
+
 	"github.com/wangcong15/go-sanitizer/argparser"
 	"github.com/wangcong15/go-sanitizer/checkers"
 	"github.com/wangcong15/go-sanitizer/code"
@@ -27,5 +29,6 @@ func main() {
 	}
 	// STEP.4 merge assertions into code
 	cs.MergeAssert()
+	cs.Dump(path.Join(cfg.ArgPkg, ".gosan"))
 	notice(cfg.GetGoodbye())
 }
