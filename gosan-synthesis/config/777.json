@@ -35,17 +35,17 @@
                 "root": "x3",
                 "attr": "X"
             },
-            "filter": "x3.Sel.Name == \"MatchString\"",
-            "callback": "lv.valMap[x5.Name] = 1"
+            "filter": "x3.Sel.Name == \"MatchString\""
         },{
             "name": "x5",
             "type": "*ast.Ident",
             "rule": {
                 "type": "element",
-                "root": "x2",
-                "attr": "Args[1]"
+                "root": "x4",
+                "attr": "lv.x2.Args[1]"
             },
-            "filter": "x4.Name == \"regexp\""
+            "filter": "x4.Name == \"regexp\"",
+            "callback": "lv.valMap[x5.Name] = 1"
         },{
             "name": "x6",
             "type": "*ast.Ident",
@@ -61,7 +61,7 @@
             "rule": {
                 "type": "element",
                 "root": "x6",
-                "attr": "Args"
+                "attr": "lv.x2.Args"
             },
             "filter": "x6.Name == \"path\""
         },{
@@ -71,7 +71,7 @@
                 "type": "foreach",
                 "root": "x7"
             },
-            "callback": "if lv.valMap[x8.Name] == 1 {\ngenAssert(c, lv)\n}"
+            "callback": "if lv.valMap[x8.Name] == 1 {\n\t\tgenAssert(c, lv)\n\t}"
         },{
             "name": "valMap",
             "type": "map[string]int",
