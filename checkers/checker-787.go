@@ -9,7 +9,6 @@ import (
 type localVars787 struct {
 	x1        *ast.FuncDecl
 	x2        *ast.AssignStmt
-	x3        *ast.Ident
 	x4        *ast.AssignStmt
 	dirtyVals map[string]int
 
@@ -52,19 +51,12 @@ func check787x1(c *code.Code, x1 *ast.FuncDecl, lv *localVars787) {
 
 func check787x2(c *code.Code, x2 *ast.AssignStmt, lv *localVars787) {
 	lv.x2 = x2
-	x3 := x2.Rhs[0]
 	if _, ok := x2.Lhs[0].(*ast.Ident); !ok {
 		return
 	}
-	if _, ok := x3.(*ast.Ident); ok {
-		check787x3(c, x3.(*ast.Ident), lv)
-	}
-}
-
-func check787x3(c *code.Code, x3 *ast.Ident, lv *localVars787) {
-	lv.x3 = x3
-	if len(Inspect(lv.x2, &ast.CallExpr{})) > 0 {
-		lv.dirtyVals[lv.x2.Lhs[0].(*ast.Ident).Name] = 1
+	x3 := x2.Rhs[0]
+	if _, ok := x3.(*ast.CallExpr); ok {
+		lv.dirtyVals[x2.Lhs[0].(*ast.Ident).Name] = 1
 	}
 }
 
@@ -80,8 +72,13 @@ func check787x4(c *code.Code, x4 *ast.AssignStmt, lv *localVars787) {
 	if _, ok := x4_.Index.(*ast.Ident); !ok {
 		return
 	}
-	lv.params = x4_.Index.(*ast.Ident).Name + ", 0"
-	lv.params2 = x4_.Index.(*ast.Ident).Name + ", len(" + x4_.X.(*ast.Ident).Name + ")"
+	indexName := x4_.Index.(*ast.Ident).Name
+	sliceName := x4_.X.(*ast.Ident).Name
+	if lv.dirtyVals[indexName] != 1 {
+		return
+	}
+	lv.params = indexName + ", 0"
+	lv.params2 = indexName + ", len(" + sliceName + ")"
 	lv.lineNo = c.Fset.Position(x4_.Lbrack).Line
 	genAssert787(c, lv)
 }
