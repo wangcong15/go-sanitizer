@@ -1,13 +1,13 @@
 package config
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
-	"os/exec"
 
 	"github.com/Unknwon/goconfig"
 	"github.com/wangcong15/go-sanitizer/checkers"
@@ -35,7 +35,12 @@ type Config struct {
 // Load : configure file
 func Load(c *Config) {
 	// load configure parameters
-	absPath := toAbsPath("github.com/wangcong15/go-sanitizer/config")
+	var absPath string
+	if _, err := os.Stat("~/go/src/github.com/wangcong15/go-sanitizer/config"); err == nil {
+		absPath = "~/go/src/github.com/wangcong15/go-sanitizer/config"
+	} else {
+		absPath = toAbsPath("github.com/wangcong15/go-sanitizer/config")
+	}
 	configFile := fmt.Sprintf("config-%s.ini", c.ArgLanguage)
 	configFile = path.Join(absPath, configFile)
 	cfg, err := goconfig.LoadConfigFile(configFile)
@@ -88,7 +93,6 @@ func (c Config) GetCWEs() []string {
 	}
 	return strings.Split(c.ArgCWE, ",")
 }
-
 
 func toAbsPath(path string) (absPath string) {
 	var goListScript string
