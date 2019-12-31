@@ -1,0 +1,71 @@
+{
+    "funcName": "AssertGt",
+    "bugType": "131",
+    "genAssert": {
+        "lineNo": "c.Fset.Position(lv.x5.Lparen).Line",
+        "params": "lv.x7.Name+\", 0\""
+    },
+    "localVars": [{
+            "name": "x1",
+            "type": "*ast.FuncDecl",
+            "rule": {
+                "type": "inspect",
+                "root": "c.F"
+            }
+        }, {
+            "name": "x2",
+            "type": "*ast.AssignStmt",
+            "rule": {
+                "type": "inspect",
+                "root": "x1"
+            }
+        }, {
+            "name": "x3",
+            "type": "*ast.Ident",
+            "rule": {
+                "type": "element",
+                "root": "x2",
+                "attr": "Lhs[0]"
+            }
+        }, {
+            "name": "x4",
+            "type": "*ast.CallExpr",
+            "rule": {
+                "type": "element",
+                "root": "x2",
+                "attr": "Rhs[0]"
+            },
+            "callback": "lv.valMap[lv.x3.Name]=1"
+        },{
+            "name": "x5",
+            "type": "*ast.CallExpr",
+            "rule": {
+                "type": "inspect",
+                "root": "x1"
+            }
+        },{
+            "name": "x6",
+            "type": "*ast.Ident",
+            "rule": {
+                "type": "element",
+                "root": "x5",
+                "attr": "Fun"
+            }
+        },{
+            "name": "x7",
+            "type": "*ast.Ident",
+            "rule": {
+                "type": "element",
+                "root": "x5",
+                "attr": "Args[1]"
+            },
+            "filter": "len(x5.Args)==2 && lv.x6.Name ==\"make\"",
+            "callback": "if lv.valMap[lv.x7.Name] == 1 {\n\t\tgenAssert131(c, lv)\n\t}"
+        },{
+            "name": "valMap",
+            "type": "map[string]int",
+            "init": "lv.valMap = make(map[string]int)",
+            "extra": true
+        }
+    ]
+}

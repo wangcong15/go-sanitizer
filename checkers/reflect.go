@@ -12,4 +12,5 @@ var CheckFuncs = map[string]interface{}{
 	"785":  check785,
 	"824":  check824,
 	"1077": check1077,
+	"131":  check131,
 }

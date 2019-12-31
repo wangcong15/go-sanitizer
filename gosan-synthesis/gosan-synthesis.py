@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     # Handle the configuration
     headers = "package checkers\nimport (\n\t\"go/ast\"\n\t\"github.com/wangcong15/go-sanitizer/code\"\n)"
-    localValStr = "type localVars%s struct {\n%s\n\tfuncName string\n\tparams   string\n\tlineNo   int\n\tbugType  string}\n}"
+    localValStr = "type localVars%s struct {\n%s\n\tfuncName string\n\tparams   string\n\tlineNo   int\n\tbugType  string\n}"
     localVals = ""
     
     funcMap = dict()
@@ -62,14 +62,14 @@ if __name__ == "__main__":
             funcMap[n].addFront("lv.%s = %s" % (n, n))
         # 
         if rt == "inspect":
-            s = "%sList := Inspect(%s, &%s{})\n\tfor _, %s := range %sList {\n\t\tcheck%s%s(c, %s.(%s), %slv)\n\t}" % (n, r, t[1:], n, n, BUGTYPE, n, n, t, "&" if n=="c.F" else "")
+            s = "%sList := Inspect(%s, &%s{})\n\tfor _, %s := range %sList {\n\t\tcheck%s%s(c, %s.(%s), %slv)\n\t}" % (n, r, t[1:], n, n, BUGTYPE, n, n, t, "&" if r=="c.F" else "")
             funcMap[r].addStatement(s)
         # 
         elif rt == "element":
             if f:
                 s = "if %s {\n\t\t%s := %s\n\t\tif _, ok := %s.(%s); ok {\n\t\t\tcheck%s%s(c, %s.(%s), lv)\n\t\t}\n\t}" % (f, n, "%s.%s" % (r, a) if not a.startswith("lv") else a, n, t, BUGTYPE, n, n, t)
             else:
-                s = "%s := %s.%s\n\tif _, ok := %s; ok {\n\t\tcheck%s%s(c, %s.(%s), lv)\n\t}" % (n, "%s.%s" % (r, a) if not a.startswith("lv") else a, n, t, BUGTYPE, n, n, t)
+                s = "%s := %s\n\tif _, ok := %s.(%s); ok {\n\t\tcheck%s%s(c, %s.(%s), lv)\n\t}" % (n, "%s.%s" % (r, a) if not a.startswith("lv") else a, n, t, BUGTYPE, n, n, t)
             funcMap[r].addStatement(s)
             if c:
                 funcMap[n].addStatement(c)
@@ -84,5 +84,10 @@ if __name__ == "__main__":
             funcMap["c.F"].addFront(i)
 
     localValStr = localValStr % (BUGTYPE, localVals)
-    finalCode = "%s\n%s\n%s" % (headers, localValStr, "\n".join([funcMap[k].toString() for k in funcMap]))
+    finalCode = "%s\n%s\n%s\n%s\n" % (
+        headers, 
+        localValStr, 
+        "\n".join([funcMap[k].toString() for k in funcMap]),
+        "func genAssert%s(c *code.Code, lv *localVars%s) {\n\tlineNo := %s\n\tparams := %s\n\tnewAssert := code.Assertion{\n\t\tFuncName: lv.funcName,\n\t\tParams:   params,\n\t\tLineNo:   lineNo,\n\t\tBugType:  lv.bugType,\n\t}\n\tc.Asserts = append(c.Asserts, newAssert)\n}" % (BUGTYPE, BUGTYPE, ASSERT_LINENO, ASSERT_PARAMS)
+    )
     print(finalCode)
