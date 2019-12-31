@@ -1,0 +1,81 @@
+{
+    "funcName": "AssertLt",
+    "bugType": "193",
+    "genAssert": {
+        "lineNo": "c.Fset.Position(lv.x2.For).Line",
+        "params": "lv.x8.Name+\", len(\"+lv.x9.Name+\")\""
+    },
+    "localVars": [{
+            "name": "x1",
+            "type": "*ast.FuncDecl",
+            "rule": {
+                "type": "inspect",
+                "root": "c.F"
+            }
+        },{
+            "name": "x2",
+            "type": "*ast.ForStmt",
+            "rule": {
+                "type": "inspect",
+                "root": "x1"
+            }
+        },{
+            "name": "x3",
+            "type": "*ast.BinaryExpr",
+            "rule": {
+                "type": "element",
+                "root": "x2",
+                "attr": "Cond"
+            }
+        }, {
+            "name": "x4",
+            "type": "*ast.Ident",
+            "rule": {
+                "type": "element",
+                "root": "x3",
+                "attr": "X"
+            },
+            "filter": "x3.Op == \"<=\""
+        }, {
+            "name": "x5",
+            "type": "*ast.BlockStmt",
+            "rule": {
+                "type": "element",
+                "root": "x4",
+                "attr": "lv.x2.Body"
+            }
+        }, {
+            "name": "x6",
+            "type": "*ast.IndexExpr",
+            "rule": {
+                "type": "inspect",
+                "root": "x5"
+            }
+        }, {
+            "name": "x8",
+            "type": "*ast.Ident",
+            "rule": {
+                "type": "element",
+                "root": "x6",
+                "attr": "lv.x3.Y"
+            }
+        }, {
+            "name": "x9",
+            "type": "*ast.Ident",
+            "rule": {
+                "type": "element",
+                "root": "x8",
+                "attr": "lv.x6.X"
+            }
+        }, {
+            "name": "x7",
+            "type": "*ast.Ident",
+            "rule": {
+                "type": "element",
+                "root": "x9",
+                "attr": "lv.x6.Index"
+            },
+            "callback": "if x7.Name == lv.x4.Name {\n\t\tgenAssert193(c, lv)\n\t}"
+        }
+    ]
+}
