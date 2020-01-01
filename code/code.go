@@ -20,7 +20,7 @@ func LoadFiles(cs CodeSlice, pkg string) CodeSlice {
 			b, _ := ioutil.ReadFile(filePath)
 			rawCode := string(b)
 			fset := token.NewFileSet()
-			f, _ := parser.ParseFile(fset, "", rawCode, parser.ParseComments)
+			f, _ := parser.ParseFile(fset, "", rawCode, 0)
 			cs = append(cs, Code{
 				FilePath: filePath,
 				Fset:     fset,

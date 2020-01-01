@@ -69,7 +69,7 @@ func check369x4(c *code.Code, x4 *ast.BinaryExpr, lv *localVars369) {
 	lv.x4 = x4
 	if x4.Op.String() == "/" {
 		exp := getExpr(x4.Y)
-		if lv.dirtyVals[exp] == 1 {
+		if lv.dirtyVals[exp] == 1 && isNormalName(exp) {
 			lv.params = exp + ", 0"
 			genAssert369(c, lv)
 		}

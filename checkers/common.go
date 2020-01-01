@@ -32,7 +32,7 @@ func getExpr(X ast.Node) (exp1 string) {
 }
 
 func isNormalName(name string) bool {
-	return (name != "" && name != "err" && name != "e" && name != "_" && !strings.Contains(name, "\""))
+	return (name != "nil" && name != "" && name != "err" && name != "e" && name != "_" && !strings.Contains(name, "\""))
 }
 
 func hasBool(names ...string) bool {
